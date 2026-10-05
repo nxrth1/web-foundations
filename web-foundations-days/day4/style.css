@@ -1,0 +1,139 @@
+/* Day 4: CSS variables make the theme easy to change. */
+:root {
+  --background: #f4f4f4;
+  --surface: #ffffff;
+  --text: #222222;
+  --muted-text: #666666;
+  --border: #cccccc;
+  --button-background: #2563eb;
+  --button-text: #ffffff;
+  --warning: #d97706;
+  --over: #dc2626;
+}
+
+body.dark {
+  --background: #121212;
+  --surface: #1f1f1f;
+  --text: #f5f5f5;
+  --muted-text: #bbbbbb;
+  --border: #444444;
+  --button-background: #60a5fa;
+  --button-text: #111111;
+  --warning: #f59e0b;
+  --over: #f87171;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 24px;
+  font-family: Arial, sans-serif;
+  line-height: 1.5;
+  background-color: var(--background);
+  color: var(--text);
+}
+
+main {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.notes-card {
+  padding: 24px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+h1 {
+  margin: 0;
+}
+
+.header-row p {
+  margin: 4px 0 0;
+  color: var(--muted-text);
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+textarea {
+  width: 100%;
+  min-height: 220px;
+  padding: 12px;
+  resize: vertical;
+  font: inherit;
+  color: var(--text);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+textarea:focus {
+  outline: 2px solid var(--button-background);
+  outline-offset: 2px;
+}
+
+.counters {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 12px 0 20px;
+}
+
+.counters p {
+  margin: 0;
+}
+
+.warning {
+  color: var(--warning);
+}
+
+.over {
+  color: var(--over);
+  font-weight: bold;
+}
+
+button {
+  padding: 10px 16px;
+  border: 1px solid var(--button-background);
+  border-radius: 8px;
+  background-color: var(--button-background);
+  color: var(--button-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 16px;
+  }
+
+  .header-row,
+  .counters {
+    flex-direction: column;
+  }
+
+  .header-row {
+    align-items: stretch;
+  }
+}
