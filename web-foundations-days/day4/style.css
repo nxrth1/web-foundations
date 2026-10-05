@@ -1,4 +1,4 @@
-/* Day 4: CSS variables make the theme easy to change. */
+/* These variables are the light-theme colors used throughout the page. */
 :root {
   --background: #f4f4f4;
   --surface: #ffffff;
@@ -11,6 +11,7 @@
   --over: #dc2626;
 }
 
+/* JavaScript adds/removes "dark" on <body>; these values replace the light colors. */
 body.dark {
   --background: #121212;
   --surface: #1f1f1f;
@@ -27,6 +28,7 @@ body.dark {
   box-sizing: border-box;
 }
 
+/* Styles the whole page: body is the outer HTML element around the app. */
 body {
   margin: 0;
   min-height: 100vh;
@@ -37,6 +39,7 @@ body {
   color: var(--text);
 }
 
+/* These selectors match the layout elements in index.html. */
 main {
   max-width: 760px;
   margin: 0 auto;
@@ -49,6 +52,7 @@ main {
   border-radius: 12px;
 }
 
+/* .header-row is the container holding the title and theme button. */
 .header-row {
   display: flex;
   align-items: flex-start;
@@ -57,6 +61,7 @@ main {
   margin-bottom: 24px;
 }
 
+/* Styles for the heading and the short description in the header. */
 h1 {
   margin: 0;
 }
@@ -66,12 +71,14 @@ h1 {
   color: var(--muted-text);
 }
 
+/* The label is connected to the note textarea with for="note-text". */
 label {
   display: block;
   margin-bottom: 8px;
   font-weight: bold;
 }
 
+/* Styles the note input: <textarea id="note-text"> in index.html. */
 textarea {
   width: 100%;
   min-height: 220px;
@@ -84,11 +91,13 @@ textarea {
   border-radius: 8px;
 }
 
+/* Shows a focus outline while the user is typing in the textarea. */
 textarea:focus {
   outline: 2px solid var(--button-background);
   outline-offset: 2px;
 }
 
+/* .counters contains the character and word count paragraphs. */
 .counters {
   display: flex;
   justify-content: space-between;
@@ -100,6 +109,7 @@ textarea:focus {
   margin: 0;
 }
 
+/* These classes are added to #char-count by updateCounts() in script.js. */
 .warning {
   color: var(--warning);
 }
@@ -109,6 +119,7 @@ textarea:focus {
   font-weight: bold;
 }
 
+/* Styles both HTML buttons: #theme-toggle and #clear-btn. */
 button {
   padding: 10px 16px;
   border: 1px solid var(--button-background);
@@ -119,10 +130,12 @@ button {
   cursor: pointer;
 }
 
+/* :hover applies while the pointer is over either button. */
 button:hover {
   opacity: 0.9;
 }
 
+/* On narrow screens, stack the header and counters vertically. */
 @media (max-width: 600px) {
   body {
     padding: 16px;
