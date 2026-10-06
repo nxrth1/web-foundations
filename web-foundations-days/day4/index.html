@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>QuickNotes - Day 4</title>
   <link rel="stylesheet" href="style.css" />
-  <!-- This loads the JavaScript file. "defer" waits until the HTML is parsed
-       before script.js looks up elements such as #note-text and #clear-btn. -->
-  <script src="script.js" defer></script>
 </head>
 <body>
   <main>
@@ -17,12 +14,17 @@
           <h1>QuickNotes</h1>
           <p>Write a note and save it as a draft.</p>
         </div>
-        <!-- script.js finds this button by its id and listens for clicks. -->
+
         <button id="theme-toggle" type="button">Dark mode</button>
       </div>
 
+      <div class="status-row" aria-live="polite">
+        <span id="save-status" class="save-status neutral">Draft ready</span>
+        <span id="last-saved" class="last-saved">Not saved yet</span>
+      </div>
+
       <label for="note-text">Your note</label>
-      <!-- The textarea's id connects it to the label and to script.js. -->
+
       <textarea
         id="note-text"
         rows="10"
@@ -31,14 +33,17 @@
       ></textarea>
 
       <div class="counters">
-        <!-- script.js updates these paragraphs as the note changes. -->
-        <p id="char-count">0 / 200 characters</p>
-        <p id="word-count">0 words</p>
+        <p id="char-count" class="count-pill">0 / 200 characters</p>
+        <p id="word-count" class="count-pill">0 words</p>
       </div>
 
-      <!-- script.js connects this id to the click handler that clears the note. -->
-      <button id="clear-btn" type="button">Clear</button>
+      <div class="button-row">
+        <button id="new-note-btn" type="button" class="secondary">New note</button>
+        <button id="clear-btn" type="button" class="danger">Clear</button>
+      </div>
     </section>
   </main>
+
+  <script src="script.js"></script>
 </body>
 </html>

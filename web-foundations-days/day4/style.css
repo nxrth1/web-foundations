@@ -1,4 +1,3 @@
-/* These variables are the light-theme colors used throughout the page. */
 :root {
   --background: #f4f4f4;
   --surface: #ffffff;
@@ -7,11 +6,16 @@
   --border: #cccccc;
   --button-background: #2563eb;
   --button-text: #ffffff;
+  --button-secondary: #e2e8f0;
+  --button-secondary-text: #0f172a;
+  --button-danger: #ef4444;
   --warning: #d97706;
   --over: #dc2626;
+  --success: #15803d;
+  --saving: #b45309;
+  --neutral: #475569;
 }
 
-/* JavaScript adds/removes "dark" on <body>; these values replace the light colors. */
 body.dark {
   --background: #121212;
   --surface: #1f1f1f;
@@ -20,15 +24,20 @@ body.dark {
   --border: #444444;
   --button-background: #60a5fa;
   --button-text: #111111;
+  --button-secondary: #334155;
+  --button-secondary-text: #f8fafc;
+  --button-danger: #f87171;
   --warning: #f59e0b;
   --over: #f87171;
+  --success: #4ade80;
+  --saving: #fbbf24;
+  --neutral: #cbd5e1;
 }
 
 * {
   box-sizing: border-box;
 }
 
-/* Styles the whole page: body is the outer HTML element around the app. */
 body {
   margin: 0;
   min-height: 100vh;
@@ -39,7 +48,6 @@ body {
   color: var(--text);
 }
 
-/* These selectors match the layout elements in index.html. */
 main {
   max-width: 760px;
   margin: 0 auto;
@@ -50,18 +58,17 @@ main {
   background-color: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
 }
 
-/* .header-row is the container holding the title and theme button. */
 .header-row {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
-/* Styles for the heading and the short description in the header. */
 h1 {
   margin: 0;
 }
@@ -71,14 +78,61 @@ h1 {
   color: var(--muted-text);
 }
 
-/* The label is connected to the note textarea with for="note-text". */
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.save-status,
+.last-saved,
+.count-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+}
+
+.save-status {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.save-status.saved {
+  background-color: rgba(21, 128, 61, 0.12);
+  color: var(--success);
+}
+
+.save-status.saving {
+  background-color: rgba(180, 83, 9, 0.12);
+  color: var(--saving);
+}
+
+.save-status.restored {
+  background-color: rgba(37, 99, 235, 0.12);
+  color: var(--button-background);
+}
+
+.save-status.neutral {
+  background-color: rgba(71, 85, 105, 0.12);
+  color: var(--neutral);
+}
+
+.last-saved {
+  color: var(--muted-text);
+  background-color: rgba(148, 163, 184, 0.1);
+}
+
 label {
   display: block;
   margin-bottom: 8px;
   font-weight: bold;
 }
 
-/* Styles the note input: <textarea id="note-text"> in index.html. */
 textarea {
   width: 100%;
   min-height: 220px;
@@ -89,15 +143,15 @@ textarea {
   background-color: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Shows a focus outline while the user is typing in the textarea. */
 textarea:focus {
-  outline: 2px solid var(--button-background);
-  outline-offset: 2px;
+  outline: none;
+  border-color: var(--button-background);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
-/* .counters contains the character and word count paragraphs. */
 .counters {
   display: flex;
   justify-content: space-between;
@@ -109,7 +163,11 @@ textarea:focus {
   margin: 0;
 }
 
-/* These classes are added to #char-count by updateCounts() in script.js. */
+.count-pill {
+  background-color: rgba(148, 163, 184, 0.1);
+  color: var(--text);
+}
+
 .warning {
   color: var(--warning);
 }
@@ -119,7 +177,12 @@ textarea:focus {
   font-weight: bold;
 }
 
-/* Styles both HTML buttons: #theme-toggle and #clear-btn. */
+.button-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
 button {
   padding: 10px 16px;
   border: 1px solid var(--button-background);
@@ -128,25 +191,50 @@ button {
   color: var(--button-text);
   font: inherit;
   cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.15s ease;
 }
 
-/* :hover applies while the pointer is over either button. */
 button:hover {
   opacity: 0.9;
 }
 
-/* On narrow screens, stack the header and counters vertically. */
+button:active {
+  transform: translateY(1px);
+}
+
+button.secondary {
+  border-color: var(--button-secondary);
+  background-color: var(--button-secondary);
+  color: var(--button-secondary-text);
+}
+
+button.danger {
+  border-color: var(--button-danger);
+  background-color: var(--button-danger);
+}
+
 @media (max-width: 600px) {
   body {
     padding: 16px;
   }
 
   .header-row,
-  .counters {
+  .status-row,
+  .counters,
+  .button-row {
     flex-direction: column;
   }
 
-  .header-row {
+  .header-row,
+  .status-row {
     align-items: stretch;
+  }
+
+  .button-row {
+    align-items: stretch;
+  }
+
+  .button-row button {
+    width: 100%;
   }
 }
