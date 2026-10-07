@@ -1,67 +1,88 @@
- 
-checks response.ok,and displays each 
-user's name, email, city and company name using 
-createElement and textContent; loading, success and error messages 
-in #status; 
-the button disabled while loading; and a filter box that shows 
-only users whose name includes 
-the typed text (not case-sensitive), without making a new request.
-
-In users.js, write loadUsers() using fetch, async / await and try / catch / finally.
-
-Store the loaded users in an array and write a renderUsers(list) function that draws any array of users.
-
-Listen for the input event on the filter box, filter the stored array and call renderUsers with the result. 
-Show "No users match your filter." when nothing matches.
-
 const API_URL = "https://jsonplaceholder.typicode.com/users";
 
-const loadusersBtn = document.querySelector("#load-users");
+const loadUsersButton = document.querySelector("#load-users");
 const statusText = document.querySelector("#status");
 const list = document.querySelector("#users-list");
 const filterInput = document.querySelector("#filter-input");
 
+let users = [];
+let hasLoadedUsers = false;
+
 function createUserElement(user) {
   const li = document.createElement("li");
-  li.textContent = `${user.name} (${user.email}) - ${user.address.city}, ${user.company.name}`;
+  const name = document.createElement("h2");
+  name.textContent = user.name;
+  li.appendChild(name);
+
+  const email = document.createElement("p");
+  email.textContent = `Email: ${user.email}`;
+  li.appendChild(email);
+
+  const city = document.createElement("p");
+  city.textContent = `City: ${user.address.city}`;
+  li.appendChild(city);
+
+  const company = document.createElement("p");
+  company.textContent = `Company: ${user.company.name}`;
+  li.appendChild(company);
+
   return li;
+}
+
+function renderUsers(userList) {
+  list.replaceChildren();
+
+  if (userList.length === 0) {
+    statusText.textContent = "No users match your filter.";
+    return;
+  }
+
+  userList.forEach(user => {
+    list.appendChild(createUserElement(user));
+  });
 }
 
 async function loadUsers() {
   statusText.textContent = "Loading users...";
-  loadusersBtn.disabled = true;
-  list.innerHTML = "";
+  loadUsersButton.disabled = true;
+  list.replaceChildren();
+  users = [];
+  hasLoadedUsers = false;
 
   try {
     const response = await fetch(API_URL);
-    if (!response.ok) throw new Error(`Status ${response.status}`);
-    const users = await response.json();
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+
+    users = await response.json();
+    hasLoadedUsers = true;
     renderUsers(users);
-    statusText.textContent = `Loaded ${users.length} users.`;
+    if (users.length > 0) {
+      statusText.textContent = `Loaded ${users.length} users.`;
+    }
   } catch (error) {
     statusText.textContent = "Could not load users. Please try again.";
     console.error(error);
   } finally {
-    loadusersBtn.disabled = false; // runs whether it worked or failed
+    loadUsersButton.disabled = false;
   }
 }
 
-function renderUsers(users) {
-  list.innerHTML = "";
-  if (users.length === 0) {
-    statusText.textContent = "No users match your filter.";
-    return;
-  }
-  users.forEach(user => {
-    const userElement = createUserElement(user);
-    list.appendChild(userElement);
-  });
-}
-
-loadusersBtn.addEventListener("click", loadUsers);
+loadUsersButton.addEventListener("click", loadUsers);
 
 filterInput.addEventListener("input", () => {
+  if (!hasLoadedUsers) {
+    return;
+  }
+
   const filterText = filterInput.value.toLowerCase();
-  const filteredUsers = users.filter(user => user.name.toLowerCase().includes(filterText));
+  const filteredUsers = users.filter(user =>
+    user.name.toLowerCase().includes(filterText)
+  );
+
   renderUsers(filteredUsers);
-}); 
+  if (filteredUsers.length > 0) {
+    statusText.textContent = `Showing ${filteredUsers.length} of ${users.length} users.`;
+  }
+});
