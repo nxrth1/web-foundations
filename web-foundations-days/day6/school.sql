@@ -4,7 +4,7 @@
 
 PRAGMA foreign_keys = ON;
 
--- Drop tables first so the script can be rerun safely.
+-- This is a reset-and-seed script: running it deletes and recreates these tables.
 DROP TABLE IF EXISTS enrolments;
 DROP TABLE IF EXISTS courses;
 DROP TABLE IF EXISTS students;
@@ -18,34 +18,38 @@ CREATE TABLE students (
 
 CREATE TABLE courses (
     course_id INTEGER PRIMARY KEY,
-    course_name TEXT NOT NULL UNIQUE
+    course_name TEXT NOT NULL UNIQUE,
+    teacher TEXT NOT NULL
 );
 
 CREATE TABLE enrolments (
     student_id INTEGER NOT NULL,
     course_id INTEGER NOT NULL,
-    grade TEXT NOT NULL,
+    grade TEXT,
     PRIMARY KEY (student_id, course_id),
-    FOREIGN KEY (student_id) REFERENCES students(student_id),
-    FOREIGN KEY (course_id) REFERENCES courses(course_id)
+    FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE,
+    FOREIGN KEY (course_id) REFERENCES courses(course_id) ON DELETE CASCADE
 );
 
 -- The composite primary key in enrolments prevents a student from
 -- enrolling in the same course more than once.
 
--- 2. Insert sample data: 3 students, 3 courses, and 5 enrolments.
+-- 2. Insert sample data: 4 students, 3 courses, and 5 enrolments.
+-- A NULL grade means the course has not been graded yet.
+-- Diana has no enrolments so Query 4 returns a result.
 INSERT INTO students (student_id, name, email) VALUES
     (1, 'Amina Otieno', 'amina@example.com'),
     (2, 'Brian Kamau', 'brian@example.com'),
-    (3, 'Carol Wanjiku', 'carol@example.com');
+    (3, 'Carol Wanjiku', 'carol@example.com'),
+    (4, 'Diana Mwangi', 'diana@example.com');
 
-INSERT INTO courses (course_id, course_name) VALUES
-    (1, 'Database Systems'),
-    (2, 'Web Development'),
-    (3, 'Data Analytics');
+INSERT INTO courses (course_id, course_name, teacher) VALUES
+    (1, 'Database Systems', 'Mr Ochieng'),
+    (2, 'Web Development', 'Ms Njeri'),
+    (3, 'Data Analytics', 'Mrs Achieng');
 
 INSERT INTO enrolments (student_id, course_id, grade) VALUES
-    (1, 1, 'A'),
+    (1, 1, NULL),
     (1, 2, 'B'),
     (2, 1, 'B'),
     (2, 3, 'A'),
@@ -84,15 +88,14 @@ LEFT JOIN enrolments AS e ON e.student_id = s.student_id
 WHERE e.student_id IS NULL
 ORDER BY s.name;
 
--- 7. Query 5: Update a student's grade.
--- This changes Brian Kamau's grade in Data Analytics from A to A-.
+-- 7. Query 5: Record Amina Otieno's grade for Database Systems.
 UPDATE enrolments
-SET grade = 'A-'
+SET grade = 'A'
 WHERE student_id = (
-    SELECT student_id FROM students WHERE name = 'Brian Kamau'
+    SELECT student_id FROM students WHERE name = 'Amina Otieno'
 )
 AND course_id = (
-    SELECT course_id FROM courses WHERE course_name = 'Data Analytics'
+    SELECT course_id FROM courses WHERE course_name = 'Database Systems'
 );
 
 -- Optional verification of the updated grade.
@@ -100,9 +103,9 @@ SELECT s.name AS student_name, c.course_name, e.grade
 FROM enrolments AS e
 JOIN students AS s ON s.student_id = e.student_id
 JOIN courses AS c ON c.course_id = e.course_id
-WHERE s.name = 'Brian Kamau'
-  AND c.course_name = 'Data Analytics';
+WHERE s.name = 'Amina Otieno'
+  AND c.course_name = 'Database Systems';
 
--- Suggested index for faster searches by student name.
--- The email column already has an index because it is UNIQUE.
-CREATE INDEX idx_students_name ON students(name);
+-- The composite primary key supports student lookups; this index supports
+-- course lookups, including the course-count query. UNIQUE(email) is indexed.
+CREATE INDEX idx_enrolments_course ON enrolments(course_id);
