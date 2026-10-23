@@ -88,15 +88,31 @@ The primary relational database stores transactional inventory and orders. Prima
 
 ### `seats`
 
-- `seat_id` — primary key.
-- `event_id` — required foreign key to `events`.
-- `section`, `row_label`, `seat_number` — seat location.
-- `price` — price for the event's seat.
-- `status` — `available`, `held`, or `sold`.
-- `order_id` — nullable foreign key to `orders`, set for a held or sold seat.
-- `hold_expires_at` — nullable deadline for a hold.
-- `UNIQUE (event_id, section, row_label, seat_number)` prevents duplicate seat definitions for an event.
-- A `CHECK` constraint requires available seats to have no order or expiry, held seats to have both an order and expiry, and sold seats to have an order but no expiry.
+PostgreSQL-style definition (the other tables are defined above):
+
+```sql
+CREATE TABLE seats (
+    seat_id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    event_id        BIGINT NOT NULL REFERENCES events(event_id) ON DELETE RESTRICT,
+    section         TEXT NOT NULL,
+    row_label       TEXT NOT NULL,
+    seat_number     TEXT NOT NULL,
+    price           NUMERIC(10, 2) NOT NULL CHECK (price >= 0),
+    status          TEXT NOT NULL DEFAULT 'available'
+                    CHECK (status IN ('available', 'held', 'sold')),
+    order_id        BIGINT REFERENCES orders(order_id) ON DELETE RESTRICT,
+    hold_expires_at TIMESTAMPTZ,
+    CONSTRAINT seats_event_location_unique
+        UNIQUE (event_id, section, row_label, seat_number),
+    CONSTRAINT seats_state_consistent CHECK (
+        (status = 'available' AND order_id IS NULL AND hold_expires_at IS NULL)
+        OR (status = 'held' AND order_id IS NOT NULL AND hold_expires_at IS NOT NULL)
+        OR (status = 'sold' AND order_id IS NOT NULL AND hold_expires_at IS NULL)
+    )
+);
+```
+
+The unique event/location constraint prevents duplicate seat definitions. The state check makes invalid combinations (such as an available seat with an order, or a sold seat with a hold expiry) impossible to commit.
 
 ### Relationships and indexes
 
@@ -157,13 +173,13 @@ The primary relational database stores transactional inventory and orders. Prima
 
 1. A visitor browses event and seat-map data. Cached seat availability is explicitly a snapshot, not a reservation.
 2. The waiting room admits the visitor and issues a short-lived signed token. The user authenticates before requesting a hold.
-3. In a single database transaction, the application creates a pending order and conditionally claims every requested seat. For each seat, it updates the row only if it is `available` or its previous hold has expired. The application checks that every requested row was updated; if any claim fails, it rolls back the whole transaction so the buyer does not get a partial set unexpectedly.
-4. Concurrent buyers for the same seat contend on the same database row. Row-level locking/conditional update ensures only one transaction can change it from available (or expired hold) to held. The transaction commits the order, seat links, and hold expiry together.
+3. In a single database transaction, the application creates a pending order, then locks all requested seat rows with `SELECT ... FOR UPDATE`, ordered by `seat_id`. It verifies that all requested IDs belong to the event and that each seat is available or has an expired hold. It then conditionally updates those rows to `held`, setting the new `order_id` and expiry. The application checks that every requested row was updated; if a seat is missing, unavailable, or the update count is short, it rolls back the whole transaction so the buyer does not get a partial set unexpectedly.
+4. Concurrent buyers for the same seat contend on the same database row. One transaction obtains the row lock first; the other waits. After the first transaction commits, the waiting transaction sees that the seat is held and cannot claim it. The conditional update is a final guard even after the availability check. The transaction commits the order, seat links, and hold expiry together, or commits none of them.
 5. A unique `(user_id, idempotency_key)` on orders makes retries return the original order instead of creating another. The seat row's single `order_id`, allowed-status transition, and transaction prevent two live orders from owning it.
 6. The buyer pays before `hold_expires_at`. The app sends an idempotent payment request to the provider. After success, a transaction rechecks that the order is still pending and its seats are still held by that order; it marks the order paid and seats sold together. A verified provider callback uses the same idempotent transition.
 7. If the hold expires before payment is confirmed, the seat can be claimed by another order. A late payment success must not sell an already reassigned seat: void/refund that payment and notify the buyer. A cleanup worker can mark expired pending orders, while each hold request also checks expiry so correctness does not depend on cleanup timing.
 
-The database transaction is the final safeguard; queue tokens, caches, and UI messages improve fairness and experience but are not substitutes for atomic inventory updates.
+The database transaction is the final safeguard; queue tokens, caches, and UI messages improve fairness and experience but are not substitutes for atomic inventory updates. Sorting the requested seat IDs before locking gives competing multi-seat requests a consistent lock order and reduces deadlock risk.
 
 ## 6. Trade-offs
 
