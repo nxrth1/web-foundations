@@ -96,6 +96,7 @@ The primary relational database stores transactional inventory and orders. Prima
 - `order_id` — nullable foreign key to `orders`, set for a held or sold seat.
 - `hold_expires_at` — nullable deadline for a hold.
 - `UNIQUE (event_id, section, row_label, seat_number)` prevents duplicate seat definitions for an event.
+- A `CHECK` constraint requires available seats to have no order or expiry, held seats to have both an order and expiry, and sold seats to have an order but no expiry.
 
 ### Relationships and indexes
 
@@ -103,7 +104,7 @@ The primary relational database stores transactional inventory and orders. Prima
 - One event has many seats; each seat belongs to one event.
 - One order can reserve or purchase multiple seats; each seat can be linked to at most one current order through its single `order_id`.
 - Index `seats(event_id, status)` for seat-map availability queries and `orders(user_id, created_at)` for order history.
-- A consistency constraint should require `order_id` and `hold_expires_at` for `held` seats, and `order_id` with no expiry for `sold` seats; `available` seats have no order or expiry.
+- These status constraints prevent seat rows from representing contradictory inventory states.
 
 ## 5. Architecture and double-booking prevention
 
